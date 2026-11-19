@@ -1,0 +1,77 @@
+name: Security scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: secureship-backend
+  # ---- Security gate thresholds (edit these) ----
+  MAX_CRITICAL: "0"        # fail if critical findings exceed this
+  FAIL_ON_CRITICAL: "true" # set to "false" to make critical findings advisory
+  MAX_HIGH: "10"
+  FAIL_ON_HIGH: "false"    # set to "true" to also gate on high findings
+  IGNORE_UNFIXED: "true"   # ignore vulnerabilities that have no upstream fix yet
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Backend tests
+        working-directory: backend
+        run: |
+          pip install -r requirements.txt
+          python -m pytest -q
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Frontend tests and build
+        working-directory: frontend
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run build
+
+  container-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build application image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install Trivy
+        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+
+      - name: Scan image and generate JSON report
+        run: |
+          EXTRA=""
+          if [ "$IGNORE_UNFIXED" = "true" ]; then EXTRA="--ignore-unfixed"; fi
+          trivy image --format json --output trivy-report.json --scanners vuln $EXTRA \
+            "$IMAGE_NAME:${{ github.sha }}"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json
+
+      - name: Security gate
+        run: python3 ci/security_gate.py trivy-report.json
