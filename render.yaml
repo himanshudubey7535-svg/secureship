@@ -1,0 +1,35 @@
+services:
+  # FastAPI Backend Service (Docker)
+  - type: web
+    name: secureship-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        value: sqlite:///./secureship.db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+
+  # Vite React Frontend (Static Site)
+  - type: web
+    name: secureship-frontend
+    env: static
+    plan: free
+    region: oregon
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: secureship-backend
+          envVarKey: RENDER_EXTERNAL_URL
+          property: url
