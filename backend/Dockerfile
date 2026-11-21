@@ -16,4 +16,4 @@ COPY . .
 RUN mkdir -p /app/reports
 # Runs as root so Trivy can read the mounted Docker socket (local image scanning).
 EXPOSE 8000
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

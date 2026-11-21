@@ -12,10 +12,14 @@ branch_labels = None
 depends_on = None
 
 NOW = sa.text("CURRENT_TIMESTAMP")
-NOW_ON_UPDATE = sa.text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    if bind.dialect.name == "sqlite":
+        NOW_ON_UPDATE = NOW
+    else:
+        NOW_ON_UPDATE = sa.text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     op.create_table(
         "users",
         sa.Column("id", sa.Integer, primary_key=True, autoincrement=True),
