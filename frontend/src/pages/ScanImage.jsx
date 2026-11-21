@@ -50,6 +50,18 @@ export default function ScanImage({ scanId, onScanChange }) {
   }, [scan?.id, scan?.status]);
   useEffect(() => () => clearInterval(timer.current), []);
 
+  const handleImageNameChange = (val) => {
+    setImageName(val);
+    const trimmed = val.trim();
+    if (trimmed && !trimmed.includes('@')) {
+      const lastSlash = trimmed.lastIndexOf('/');
+      const colon = trimmed.lastIndexOf(':');
+      if (colon > lastSlash && colon < trimmed.length - 1) {
+        setImageTag(trimmed.slice(colon + 1));
+      }
+    }
+  };
+
   async function startScan(e) {
     e.preventDefault();
     setError('');
@@ -60,7 +72,17 @@ export default function ScanImage({ scanId, onScanChange }) {
     setElapsed(0);
     timer.current = setInterval(() => setElapsed((n) => n + 1), 1000);
     try {
-      const result = await api.createScan(imageName.trim(), imageTag.trim() || 'latest');
+      let finalName = imageName.trim();
+      let finalTag = imageTag.trim() || 'latest';
+      if (!finalName.includes('@')) {
+        const lastSlash = finalName.lastIndexOf('/');
+        const colon = finalName.lastIndexOf(':');
+        if (colon > lastSlash) {
+          finalTag = finalName.slice(colon + 1) || finalTag;
+          finalName = finalName.slice(0, colon);
+        }
+      }
+      const result = await api.createScan(finalName, finalTag);
       setScan(result);
       onScanChange?.(result.id);
     } catch (err) {
@@ -82,8 +104,8 @@ export default function ScanImage({ scanId, onScanChange }) {
     <>
       <form className="panel scan-form" onSubmit={startScan}>
         <label className="field grow">Image name
-          <input value={imageName} onChange={(e) => setImageName(e.target.value)} required
-                 placeholder="nginx or ghcr.io/org/app" disabled={scanning} />
+          <input value={imageName} onChange={(e) => handleImageNameChange(e.target.value)} required
+                 placeholder="nginx or ubuntu:20.04" disabled={scanning} />
         </label>
         <label className="field tag">Tag
           <input value={imageTag} onChange={(e) => setImageTag(e.target.value)} placeholder="latest" disabled={scanning} />
