@@ -9,12 +9,12 @@ import Analytics from './pages/Analytics.jsx';
 import SecuritySettings from './pages/SecuritySettings.jsx';
 
 const TITLES = {
-  dashboard: ['Cybersecurity Command Center', 'Real-time container vulnerability and layer security telemetry'],
-  scan: ['Docker Artifact Scanner', 'Deep-inspect container file layers, libraries, and CVE databases'],
-  history: ['Scan History & Audit Logs', 'Chronological registry of all analyzed container images'],
-  reports: ['Vulnerability & Compliance Reports', 'Official security audit artifacts and compliance declarations'],
-  analytics: ['Security Telemetry & Analytics', 'Threat postures, vulnerability trends, and risk distributions'],
-  settings: ['Security Gate Policies', 'Configure automated admission thresholds for production deployments'],
+  dashboard: ['SecureShip Command Center', 'Real-time container vulnerability and layer security telemetry'],
+  scan: ['SecureShip Docker Scanner', 'Deep-inspect container file layers, libraries, and CVE databases'],
+  history: ['SecureShip Scan History', 'Chronological registry of all analyzed container images'],
+  reports: ['SecureShip Compliance Reports', 'Official security audit artifacts and compliance declarations'],
+  analytics: ['SecureShip Security Analytics', 'Threat postures, vulnerability trends, and risk distributions'],
+  settings: ['SecureShip Policy Gate', 'Configure automated admission thresholds for production deployments'],
 };
 
 export default function App() {

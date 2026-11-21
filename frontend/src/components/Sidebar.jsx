@@ -41,8 +41,8 @@ export default function Sidebar({
             </div>
             {!collapsed && (
               <div className="brand-info">
-                <span className="brand-name">SecureShip</span>
-                <span className="brand-sub">Cyber Defense</span>
+                <span className="brand-name">Secure<span className="brand-highlight">Ship</span></span>
+                <span className="brand-sub">Container Cyber Defense</span>
               </div>
             )}
           </div>

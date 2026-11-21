@@ -10,6 +10,11 @@ export default function Header({
   return (
     <header className="page-header">
       <div className="header-left">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--accent-cyan)', textTransform: 'uppercase', marginBottom: '2px' }}>
+          <span>SecureShip Cyber Platform</span>
+          <span style={{ color: 'var(--text-muted)' }}>/</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{title}</span>
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {onOpenMobile && (
             <button
