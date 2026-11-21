@@ -1,55 +1,52 @@
 @echo off
-title SecureShip Launcher
-setlocal
+setlocal EnableDelayedExpansion
 
 cd /d "%~dp0"
 
 echo ===================================================
-echo               Starting SecureShip Platform
+echo               Starting SecureShip
 echo ===================================================
 echo.
 
-:: Check Backend Venv
-if not exist "%~dp0backend\.venv\Scripts\python.exe" (
-    echo [ERROR] Backend virtualenv not found at backend\.venv!
+set "PY=%~dp0backend\.venv\Scripts\python.exe"
+set "BACKEND_DIR=%~dp0backend"
+set "FRONTEND_DIR=%~dp0frontend"
+set "NPM_CMD=C:\Program Files\nodejs\npm.cmd"
+
+if not exist "!PY!" (
+    echo [ERROR] Python environment not found at backend\.venv
     pause
     exit /b 1
 )
 
-:: Kill existing instances on ports 8000 and 5173 to avoid conflicts
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8000 ^| findstr LISTENING 2^>nul') do (
-    echo Stopping old process on port 8000 (PID %%a)...
-    taskkill /f /pid %%a >nul 2>&1
-)
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :5173 ^| findstr LISTENING 2^>nul') do (
-    echo Stopping old process on port 5173 (PID %%a)...
-    taskkill /f /pid %%a >nul 2>&1
+:: Free port 8000 if occupied
+for /f "tokens=5" %%p in ('netstat -aon ^| findstr /r ":8000.*LISTENING" 2^>nul') do (
+    taskkill /F /PID %%p >nul 2>&1
 )
 
-:: Start Backend
-echo Starting FastAPI Backend (http://localhost:8000)...
-start "SecureShip Backend" cmd /k "cd /d %~dp0backend && title SecureShip Backend && .venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+:: Free port 5173 if occupied
+for /f "tokens=5" %%p in ('netstat -aon ^| findstr /r ":5173.*LISTENING" 2^>nul') do (
+    taskkill /F /PID %%p >nul 2>&1
+)
 
-:: Wait 2 seconds for backend to initialize
-timeout /t 2 /nobreak >nul
+echo Starting Backend server (http://localhost:8000)...
+start "SecureShip Backend" cmd /k "cd /d "!BACKEND_DIR!" && "!PY!" -m uvicorn app.main:app --app-dir "!BACKEND_DIR!" --host 0.0.0.0 --port 8000"
 
-:: Start Frontend
-echo Starting Vite Frontend (http://localhost:5173)...
-start "SecureShip Frontend" cmd /k "cd /d %~dp0frontend && title SecureShip Frontend && npm run dev -- --host 0.0.0.0"
+echo Starting Frontend server (http://localhost:5173)...
+start "SecureShip Frontend" cmd /k "cd /d "!FRONTEND_DIR!" && "!NPM_CMD!" run dev -- --host 0.0.0.0"
 
-:: Wait 3 seconds then open browser
-timeout /t 3 /nobreak >nul
 echo.
+echo Waiting for servers to initialize...
+ping 127.0.0.1 -n 4 >nul
+
 echo Opening browser at http://localhost:5173...
 start http://localhost:5173
 
 echo.
 echo ===================================================
 echo SecureShip is now running!
-echo - Frontend: http://localhost:5173
-echo - Backend:  http://localhost:8000 (API docs: /docs)
-echo.
-echo (Keep the backend and frontend terminal windows open.
-echo  Run stop.bat whenever you want to shut them down.)
+echo   Frontend : http://localhost:5173
+echo   Backend  : http://localhost:8000 (Docs: /docs)
 echo ===================================================
-timeout /t 5 >nul
+echo.
+ping 127.0.0.1 -n 4 >nul
