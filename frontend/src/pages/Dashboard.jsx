@@ -1,21 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import StatCard from '../components/StatCard.jsx';
 import { scoreTone } from '../components/ScanStatus.jsx';
 import { api } from '../services/api.js';
 
 export function formatDate(iso) {
   if (!iso) return '-';
-  // The API returns naive UTC timestamps; add Z so the browser converts to local time.
   const d = new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`);
   return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-export function ScanRows({ scans, onOpen }) {
+export function ScanRows({ scans, onOpen, onDelete }) {
   return (
     <div className="table-wrap">
       <table className="table">
         <thead>
-          <tr><th>Image</th><th>Tag</th><th>Status</th><th>Score</th><th>Critical</th><th>High</th><th>Total</th><th>Scanned</th></tr>
+          <tr>
+            <th>Image</th>
+            <th>Tag</th>
+            <th>Status</th>
+            <th>Score</th>
+            <th>Critical</th>
+            <th>High</th>
+            <th>Total</th>
+            <th>Scanned</th>
+            {onDelete && <th style={{ textAlign: 'right' }}>Action</th>}
+          </tr>
         </thead>
         <tbody>
           {scans.map((s) => (
@@ -30,6 +39,21 @@ export function ScanRows({ scans, onOpen }) {
               <td>{s.status === 'completed' ? s.high_count : '-'}</td>
               <td>{s.status === 'completed' ? s.total_vulns : '-'}</td>
               <td>{formatDate(s.created_at)}</td>
+              {onDelete && (
+                <td style={{ textAlign: 'right' }}>
+                  <button
+                    className="btn btn-ghost"
+                    style={{ padding: '2px 8px', fontSize: '12px', color: 'var(--danger-red)' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(s.id);
+                    }}
+                    title="Delete scan"
+                  >
+                    Delete
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -62,14 +86,55 @@ export default function Dashboard({ onNavigate, onOpenScan }) {
   const [scans, setScans] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    Promise.all([api.getScans(), api.getStats()])
-      .then(([sc, st]) => { setScans(sc); setStats(st); })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+  const loadData = useCallback(async (isManual = false) => {
+    if (isManual) setRefreshing(true);
+    try {
+      const [sc, st] = await Promise.all([api.getScans(), api.getStats()]);
+      setScans(sc);
+      setStats(st);
+      setError('');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+      if (isManual) setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+    // Auto-refresh every 5 seconds so all devices stay in sync
+    const interval = setInterval(() => loadData(false), 5000);
+    const handleFocus = () => loadData(false);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [loadData]);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this scan?')) return;
+    try {
+      await api.deleteScan(id);
+      await loadData(false);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!window.confirm('Are you sure you want to clear all scan history?')) return;
+    try {
+      await api.clearScans();
+      await loadData(false);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
 
   const avg = stats?.average_score;
   return (
@@ -88,12 +153,32 @@ export default function Dashboard({ onNavigate, onOpenScan }) {
         <div className="panel">
           <div className="table-toolbar">
             <h3>Recent scans</h3>
-            <button className="btn btn-primary" onClick={() => onNavigate('scan')}>Quick scan</button>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                className="btn btn-ghost"
+                onClick={() => loadData(true)}
+                disabled={refreshing}
+                title="Refresh dashboard data"
+              >
+                {refreshing ? 'Refreshing…' : '↻ Refresh'}
+              </button>
+              {scans.length > 0 && (
+                <button
+                  className="btn btn-ghost"
+                  onClick={handleClearAll}
+                  style={{ color: 'var(--danger-red)' }}
+                  title="Clear all scans"
+                >
+                  Clear all
+                </button>
+              )}
+              <button className="btn btn-primary" onClick={() => onNavigate('scan')}>Quick scan</button>
+            </div>
           </div>
           {loading ? <p className="muted">Loading…</p>
             : scans.length === 0 ? (
               <p className="empty">No scans yet. Scan your first image to see its security score here.</p>
-            ) : <ScanRows scans={scans.slice(0, 5)} onOpen={onOpenScan} />}
+            ) : <ScanRows scans={scans.slice(0, 5)} onOpen={onOpenScan} onDelete={handleDelete} />}
         </div>
         <div className="panel">
           <h3>Severity distribution</h3>

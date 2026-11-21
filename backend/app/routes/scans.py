@@ -149,3 +149,20 @@ def list_scans(db: Session = Depends(get_db), user: User = Depends(get_default_u
 def get_scan(scan_id: int, db: Session = Depends(get_db), user: User = Depends(get_default_user)):
     scan = get_owned_scan(db, scan_id, user)
     return serialize_scan(scan, get_or_create_policy(db, user))
+
+
+@router.delete("/{scan_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_scan(scan_id: int, db: Session = Depends(get_db), user: User = Depends(get_default_user)):
+    scan = get_owned_scan(db, scan_id, user)
+    db.delete(scan)
+    db.commit()
+    return None
+
+
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
+def clear_scans(db: Session = Depends(get_db), user: User = Depends(get_default_user)):
+    scans = db.query(ScanResult).filter(ScanResult.user_id == user.id).all()
+    for s in scans:
+        db.delete(s)
+    db.commit()
+    return None

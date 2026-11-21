@@ -43,6 +43,9 @@ export const api = {
   getPolicy: () => json('/policies'),
   updatePolicy: (policy) => json('/policies', { method: 'PUT', body: JSON.stringify(policy) }),
 
+  deleteScan: (id) => request(`/scans/${id}`, { method: 'DELETE' }),
+  clearScans: () => request('/scans', { method: 'DELETE' }),
+
   async downloadReport(scanId, type) {
     const res = await request(`/reports/${scanId}/${type}`);
     const blob = await res.blob();
