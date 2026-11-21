@@ -30,15 +30,31 @@ export function ScanRows({ scans, onOpen, onDelete }) {
           {scans.map((s) => (
             <tr key={s.id} className="clickable" tabIndex={0}
                 onClick={() => onOpen(s.id)} onKeyDown={(e) => e.key === 'Enter' && onOpen(s.id)}>
-              <td className="mono">{s.image_name}</td>
-              <td className="mono">{s.image_tag}</td>
+              <td><span className="mono-pill">{s.image_name}</span></td>
+              <td><span className="mono-pill" style={{ opacity: 0.85 }}>{s.image_tag}</span></td>
               <td><span className={`badge status-${s.status}`}>{s.status}</span></td>
               <td>{s.security_score != null
                 ? <span className={`score tone-${scoreTone(s.security_score)}`}>{s.security_score}</span> : '-'}</td>
-              <td>{s.status === 'completed' ? s.critical_count : '-'}</td>
-              <td>{s.status === 'completed' ? s.high_count : '-'}</td>
-              <td>{s.status === 'completed' ? s.total_vulns : '-'}</td>
-              <td>{formatDate(s.created_at)}</td>
+              <td>
+                {s.status === 'completed' ? (
+                  s.critical_count > 0 ? (
+                    <span className="badge sev-critical">{s.critical_count}</span>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)' }}>0</span>
+                  )
+                ) : '-'}
+              </td>
+              <td>
+                {s.status === 'completed' ? (
+                  s.high_count > 0 ? (
+                    <span className="badge sev-high">{s.high_count}</span>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)' }}>0</span>
+                  )
+                ) : '-'}
+              </td>
+              <td style={{ fontWeight: 600 }}>{s.status === 'completed' ? s.total_vulns : '-'}</td>
+              <td className="muted" style={{ fontSize: '12px' }}>{formatDate(s.created_at)}</td>
               {onDelete && (
                 <td style={{ textAlign: 'right' }}>
                   <button
@@ -172,7 +188,7 @@ export default function Dashboard({ onNavigate, onOpenScan }) {
                   Clear all
                 </button>
               )}
-              <button className="btn btn-primary" onClick={() => onNavigate('scan')}>Quick scan</button>
+              <button className="btn btn-primary" onClick={() => onNavigate('scan')}>🚀 Quick scan</button>
             </div>
           </div>
           {loading ? <p className="muted">Loading…</p>

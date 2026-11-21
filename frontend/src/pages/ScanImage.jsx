@@ -100,20 +100,58 @@ export default function ScanImage({ scanId, onScanChange }) {
     finally { setDownloading(''); }
   }
 
+  const PRESETS = [
+    { name: 'alpine', tag: '3.18' },
+    { name: 'nginx', tag: 'alpine' },
+    { name: 'ubuntu', tag: '18.04' },
+    { name: 'redis', tag: '6-alpine' },
+  ];
+
+  const applyPreset = (preset) => {
+    setImageName(preset.name);
+    setImageTag(preset.tag);
+  };
+
   return (
     <>
-      <form className="panel scan-form" onSubmit={startScan}>
-        <label className="field grow">Image name
-          <input value={imageName} onChange={(e) => handleImageNameChange(e.target.value)} required
-                 placeholder="nginx or ubuntu:20.04" disabled={scanning} />
-        </label>
-        <label className="field tag">Tag
-          <input value={imageTag} onChange={(e) => setImageTag(e.target.value)} placeholder="latest" disabled={scanning} />
-        </label>
-        <button className="btn btn-primary" disabled={scanning || !imageName.trim()}>
-          {scanning ? 'Scanning…' : 'Scan image'}
-        </button>
-      </form>
+      <div className="panel scan-form-card">
+        <form className="scan-form" onSubmit={startScan}>
+          <label className="field grow">Container image name
+            <input value={imageName} onChange={(e) => handleImageNameChange(e.target.value)} required
+                   placeholder="e.g. nginx, alpine:3.18, or ubuntu" disabled={scanning} />
+          </label>
+          <label className="field tag">Tag
+            <input value={imageTag} onChange={(e) => setImageTag(e.target.value)} placeholder="latest" disabled={scanning} />
+          </label>
+          <button className="btn btn-primary" disabled={scanning || !imageName.trim()}>
+            {scanning ? (
+              <>
+                <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }} />
+                <span>Scanning…</span>
+              </>
+            ) : (
+              <>
+                <span>🚀 Launch Scan</span>
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="presets-row">
+          <span>Quick samples:</span>
+          {PRESETS.map((p) => (
+            <button
+              key={`${p.name}:${p.tag}`}
+              type="button"
+              className="preset-pill"
+              onClick={() => applyPreset(p)}
+              disabled={scanning}
+            >
+              {p.name}:{p.tag}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {error && <div className="alert" role="alert">{error}</div>}
 
