@@ -44,7 +44,7 @@ export default function StatCard({ label, value, hint, tone = 'default' }) {
     <div className={`stat-card tone-${tone}`}>
       <div className="stat-top-row">
         <span className="stat-label">{label}</span>
-        {icon && <span className="stat-icon">{icon}</span>}
+        {icon && <div className="stat-icon-wrapper">{icon}</div>}
       </div>
       <div className="stat-value">{value}</div>
       {hint && <div className="stat-hint">{hint}</div>}
