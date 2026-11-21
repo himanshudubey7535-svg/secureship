@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const rawUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+const API_URL = rawUrl ? (rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`) : '/api';
 
 function errorMessage(body, status) {
   const detail = body && body.detail;
@@ -52,7 +53,7 @@ export const api = {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `secureship-scan-${scanId}.${type}`;
+    a.download = `secureship-report-${scanId}.${type}`;
     document.body.appendChild(a);
     a.click();
     a.remove();
