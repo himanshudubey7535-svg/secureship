@@ -1,11 +1,15 @@
-import { Search, Bell, Shield, Menu } from 'lucide-react';
+import { Search, Bell, Shield, Menu, Snowflake, Sun, Moon } from 'lucide-react';
 
 export default function Header({
   title,
   subtitle,
   onOpenMobile,
   searchQuery = '',
-  onSearchChange
+  onSearchChange,
+  snowEnabled = true,
+  onToggleSnow,
+  theme = 'dark',
+  onToggleTheme
 }) {
   return (
     <header className="page-header">
@@ -43,6 +47,30 @@ export default function Header({
               onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
+        )}
+
+        {onToggleTheme && (
+          <button
+            className="header-btn"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Switch to Default Mode (Light/Off-White)' : 'Switch to Dark Mode'}
+            aria-label="Toggle Theme Mode"
+            style={{ color: theme === 'dark' ? '#fbbf24' : '#6366f1' }}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+        )}
+
+        {onToggleSnow && (
+          <button
+            className="header-btn"
+            onClick={onToggleSnow}
+            title={snowEnabled ? 'Disable winter snowfall' : 'Enable winter snowfall'}
+            aria-label="Toggle Winter Snow"
+            style={{ color: snowEnabled ? 'var(--accent-cyan)' : 'var(--text-muted)' }}
+          >
+            <Snowflake size={16} />
+          </button>
         )}
 
         <button className="header-btn" title="Threat Alerts" aria-label="Notifications">

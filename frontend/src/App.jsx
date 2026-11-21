@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar.jsx';
 import Header from './components/Header.jsx';
+import SnowEffect from './components/SnowEffect.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ScanImage from './pages/ScanImage.jsx';
 import ScanHistory from './pages/ScanHistory.jsx';
@@ -23,6 +24,21 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [snowEnabled, setSnowEnabled] = useState(true);
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('secureship-theme') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('secureship-theme', nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
 
   const navigate = (page) => {
     if (page === 'scan') setSelectedScanId(null);
@@ -39,7 +55,9 @@ export default function App() {
   const [title, subtitle] = TITLES[currentPage] || ['SecureShip', 'Container Security Platform'];
 
   return (
-    <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
+    <div className={`app-shell ${collapsed ? 'sidebar-collapsed' : ''}`} data-theme={theme}>
+      {snowEnabled && <SnowEffect />}
+
       <Sidebar
         currentPage={currentPage}
         onNavigate={navigate}
@@ -56,6 +74,10 @@ export default function App() {
           onOpenMobile={() => setMobileOpen(true)}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          snowEnabled={snowEnabled}
+          onToggleSnow={() => setSnowEnabled(!snowEnabled)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
 
         {currentPage === 'dashboard' && (
